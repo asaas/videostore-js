@@ -1,72 +1,65 @@
 function statement (customer, movies) {
-  let result = 'Rental Record for ' + customer.name + '\n'
+  return header(customer.name) +
+    rentalLines(customer.rentals, movies) +
+    footer(customer.rentals, movies);
+}
 
-  for (let r of customer.rentals) {
-    result += '\t' + movieFor(r, movies).title + '\t' + amountFor(r, movies) + '\n'
-  }
+function header(name) {
+  return `Rental Record for ${name}\n`;
+}
 
-  result += 'Amount owed is ' + totalAmount(customer.rentals, movies) + '\n'
-  result += 'You earned ' + totalFrequentRenterPoints(customer.rentals, movies) + ' frequent renter points\n';
+function rentalLines(rantals, movies) {
+  return rantals.map(r => rentalLine(r, movies)).join('');
+}
 
-  return result;
+function footer(rentals, movies) {
+  return `Amount owed is ${totalAmount(rentals, movies)}\n` +
+    `You earned ${totalFrequentRenterPoints(rentals, movies)} frequent renter points\n`;
+}
+
+function rentalLine(rental, movies) {
+  return `\t${movieFor(rental, movies).title}\t${amountFor(rental, movies)}\n`
 }
 
 function movieFor(rental, movies) {
-  return movies[rental.movieID]
+  return movies[rental.movieID];
 }
 
 function amountFor(rental, movies) {
-  let thisAmount = 0;
-
   switch (movieFor(rental, movies).code) {
-    case 'regular':
-      thisAmount = 2;
-      if (rental.days > 2) {
-        thisAmount += (rental.days - 2) * 1.5;
-      }
-      break;
-    case 'new':
-      thisAmount = rental.days * 3;
-      break;
-    case 'childrens':
-      thisAmount = 1.5;
-      if (rental.days > 3) {
-        thisAmount += (rental.days - 3) * 1.5;
-      }
-      break;
+    case 'regular': {
+      const baseAmount = 2;
+      return rental.days > 2 ? baseAmount + (rental.days - 2) * 1.5
+        : baseAmount;
+    }
+    case 'new': {
+      return rental.days * 3;
+    }
+    case 'childrens': {
+      const baseAmount = 1.5;
+      return rental.days > 3 ? baseAmount + (rental.days - 3) * 1.5
+        : baseAmount;
+    }
   }
-
-  return thisAmount;
 }
 
 function totalAmount(rentals, movies) {
-  let totalAmount = 0;
-
-  for (let r of rentals) {
-    totalAmount += amountFor(r, movies);
-  }
-
-  return totalAmount;
+  return rentals
+    .map(r => amountFor(r, movies))
+    .reduce((acc, cur) => acc + cur, 0);
 }
 
 function frequentRenterPointsFor(rental, movies) {
-  let frequentRenterPoints = 0;
+  const baseRenterPoints = 1;
 
-  frequentRenterPoints++;
-  if(movieFor(rental, movies).code === 'new' && rental.days > 2) frequentRenterPoints++;
-
-  return frequentRenterPoints;
+  return movieFor(rental, movies).code === 'new' && rental.days > 2 ? baseRenterPoints + 1
+    : baseRenterPoints;
 }
 
 function totalFrequentRenterPoints(rentals, movies) {
-  let frequentRenterPoints = 0;
-
-  for (let r of rentals) {
-
-    frequentRenterPoints += frequentRenterPointsFor(r, movies)
-  }
-
-  return frequentRenterPoints;
+  return rentals
+    .map(r => frequentRenterPointsFor(r, movies))
+    .reduce((acc, cur) => acc + cur, 0);
 }
 
 module.exports = {
